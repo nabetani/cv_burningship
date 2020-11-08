@@ -1,16 +1,21 @@
 #include <cmath>
+#include <cstdint>
 #include <iostream>
+
 #include <omp.h>
 #include <opencv2/opencv.hpp>
 
+using namespace std;
+
 int main(int argc, char const *argv[]) {
-  unsigned long long volatile x = 0;
-  int const N = 1000000;
-#pragma omp parallel for
-  for (int i = 0; i < N; ++i) {
-    x += std::sin(++argc) * 77 == 1 ? 0 : 1;
-  }
-  cv::Mat m = cv::Mat::zeros(1, 1, CV_8UC1);
-  std::cout << "m:" << m << "\n";
-  std::cout << "x:" << (x * 100.0 / N) << "%" << std::endl;
+  uint32_t w = argc < 2 ? 800 : atoi(argv[1]);
+  uint32_t d = argc < 3 ? 800 : atoi(argv[2]);
+  std::string fn = argc < 4 ? "hoge.png" : argv[3];
+  std::cout << "w=" << w     //
+            << "  d=" << d   //
+            << "  fn=" << fn //
+            << std::endl;
+  auto im = cv::Mat::zeros(w, w, CV_8UC1);
+  cv::imwrite(fn, im);
+  return 0;
 }
