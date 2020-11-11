@@ -97,7 +97,7 @@ cv::Mat createImage(uint32_t wpix, uint32_t d) {
   cv::Mat im = cv::Mat::zeros(wpix, wpix, CV_8UC3);
   ColorMap cm;
   ImageCalculator ic{d, -0.5, -0.5, 4.0};
-#pragma omp parallel for
+#pragma omp parallel for num_threads(64)
   for (uint32_t iy = 0; iy < wpix; ++iy) {
     auto pix = im.ptr(iy, 0);
     double y = ic.yval(iy * 1.0 / wpix);
