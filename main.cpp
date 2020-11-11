@@ -7,8 +7,7 @@
 #include <opencv2/opencv.hpp>
 
 using namespace std;
-
-constexpr double PI = 3.14159265358979323846264338327950288419716939937510582;
+constexpr double PI = 3.14159265358979323846;
 
 struct ImageCalculator {
 
@@ -56,11 +55,11 @@ struct ColorMap {
       m_[ix] = colorAt(ix);
     }
   }
-  double f_inv(double f) {
-    const double delta = 6 / 29;
+  constexpr double f_inv(double f) {
+    const double delta = 6.0 / 29;
     return delta < f       //
                ? f * f * f //
-               : (f - 16 / 116) * 3 * delta * delta;
+               : (f - 16.0 / 116) * 3 * delta * delta;
   };
   double nonlinear(double x0) {
     auto x = std::clamp<double>(x0, 0, 1);
@@ -70,15 +69,15 @@ struct ColorMap {
   };
 
   Rgb colorAt(int ix) {
-    const double yn = 0.578;
-    const double xn = 0.549;
-    const double zn = 0.629;
-    const double AB = 100;
+    constexpr double yn = 0.578;
+    constexpr double xn = 0.549;
+    constexpr double zn = 0.629;
+    constexpr double AB = 100;
     const double th = ix * 2 * PI / size;
     const double a = cos(th) * AB;
     const double b = sin(th) * AB;
-    const double L = 80;
-    const double fy = (L + 16) / 116;
+    constexpr double L = 80;
+    constexpr double fy = (L + 16) / 116;
     const double fx = fy + a / 500;
     const double fz = fy - b / 200;
     const double y = yn * f_inv(fy);
