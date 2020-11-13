@@ -21,23 +21,41 @@ end
 get '/' do
   <<~HTML
   <style>
-  img{ width:60% }
+  img{ width:calc(100vw - 160px) }
   input.float{ width:15ex }
   input.int{ width:10ex }
+  .sidebar {
+    width: 140px;
+  }
+  .main {
+    width: calc(100vw - 150px);
+  }
+  .root {
+    width: calc(100vw - 20px);
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+  }
   </style>
-  <div>
-    <label for="cx">cx:</label>
-    <input class="float" id="cx" type="text"> &nbsp;
-    <label for="cy">cy:</label>
-    <input class="float" id="cy" type="text"> &nbsp;
-    <label for="w">w:</label>
-    <input class="float" id="w" type="text"><br/>
-    <label for="wpix">wpix:</label>
-    <input class="int" id="wpix" type="text"> &nbsp;
-    <label for="d">d:</label>
-    <input class="int" id="d" type="text"> &nbsp;
+  <div class="root">
+    <aside class="sidebar">
+      <label for="cx">cx:</label>
+      <input class="float" id="cx" type="text"> <br/>
+      <label for="cy">cy:</label>
+      <input class="float" id="cy" type="text"> <br/>
+      <label for="w">w:</label>
+      <input class="float" id="w" type="text"> <br/>
+      <button id="zout">zoom out</button>
+      <br/>
+      <label for="wpix">wpix:</label>
+      <input class="int" id="wpix" type="text"> <br/>
+      <label for="d">d:</label>
+      <input class="int" id="d" type="text"> <br/>
+    </aside>
+    <div class="main">
+      <img id="img" src="img/hoge.png"/>
+    </div>
   </div>
-  <img id="img" src="img/hoge.png"/>
   <script>
     const set = ( name, val )=>{
       document.getElementById(name).value = val;
@@ -73,6 +91,11 @@ get '/' do
         }
       };
       xhr.send(null);
+    };
+
+    document.getElementById("zout").onclick = ()=>{
+      set("w", getnum("w")*2);
+      update();
     };
 
     const img = document.getElementById("img");
