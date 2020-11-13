@@ -24,7 +24,7 @@ struct ImageCalculator {
       zi = 2 * azi * azr + ci;
       double d2 = zr * zr + zi * zi;
       if (4 < d2) {
-        return i;
+        return static_cast<uint32_t>((1u << 16) + i * 128 - sqrt(d2) * 32);
       }
     }
     return ~0u;
@@ -59,7 +59,7 @@ struct ColorMap {
     const double delta = 6.0 / 29;
     return delta < f       //
                ? f * f * f //
-               : (f - 16.0 / 116) * 3 * delta * delta;
+               : (f - 128.0 / 116) * 3 * delta * delta;
   };
   double nonlinear(double x0) {
     auto x = std::clamp<double>(x0, 0, 1);
@@ -73,7 +73,7 @@ struct ColorMap {
     constexpr double xn = 0.549;
     constexpr double zn = 0.629;
     constexpr double AB = 100;
-    const double th = ix * 2 * PI / size;
+    const double th = ix * (2 * PI / size);
     const double a = cos(th) * AB;
     const double b = sin(th) * AB;
     constexpr double L = 80;
@@ -93,25 +93,26 @@ struct ColorMap {
   }
 };
 
-cv::Mat createImage(uint32_t wpix, uint32_t d) {
+cv::Mat createImage(uint32_t wpix, uint32_t d, double cx, double cy, double w) {
   cv::Mat im = cv::Mat::zeros(wpix, wpix, CV_8UC3);
   ColorMap cm;
-  ImageCalculator ic{d, -0.5, -0.5, 4.0};
-#pragma omp parallel for num_threads(64)
+  ImageCalculator ic{d, cx, cy, w};
+  double const wpixInv = 1.0 / wpix;
+#pragma omp parallel for num_threads(64) schedule(dynamic)
   for (uint32_t iy = 0; iy < wpix; ++iy) {
     auto pix = im.ptr(iy, 0);
-    double y = ic.yval(iy * 1.0 / wpix);
+    double y = ic.yval(iy * wpixInv);
     for (uint32_t ix = 0; ix < wpix; ++ix, pix += 3) {
-      auto c = ic.calc(ic.xval(ix * 1.0 / wpix), y);
-      if (d < c) {
-        pix[0] = 0;
-        pix[1] = 0;
-        pix[2] = 0;
-      } else {
+      auto c = ic.calc(ic.xval(ix * wpixInv), y);
+      if (~c) {
         auto const &col = cm.m_[c & cm.mask];
         pix[0] = col.r_;
         pix[1] = col.g_;
         pix[2] = col.b_;
+      } else {
+        pix[0] = 0;
+        pix[1] = 0;
+        pix[2] = 0;
       }
     }
   }
@@ -119,14 +120,19 @@ cv::Mat createImage(uint32_t wpix, uint32_t d) {
 }
 
 int main(int argc, char const *argv[]) {
-  uint32_t w = argc < 2 ? 800 : atoi(argv[1]);
+  uint32_t wpix = argc < 2 ? 800 : atoi(argv[1]);
   uint32_t d = argc < 3 ? 200 : atoi(argv[2]);
-  std::string fn = argc < 4 ? "hoge.png" : argv[3];
-  std::cout << "wpix=" << w  //
-            << "  d=" << d   //
-            << "  fn=" << fn //
+  double cx = argc < 4 ? -0.5 : atof(argv[3]);
+  double cy = argc < 5 ? -0.5 : atof(argv[4]);
+  double w = argc < 6 ? 3.5 : atof(argv[5]);
+  std::string fn = argc < 7 ? "hoge.png" : argv[6];
+  std::cout << "wpix=" << wpix                    //
+            << "  d=" << d                        //
+            << "  c=(" << cx << ", " << cy << ")" //
+            << "  w=" << w                        //
+            << "  fn=" << fn                      //
             << std::endl;
-  auto im = createImage(w, d);
+  auto im = createImage(wpix, d, cx, cy, w);
   cv::imwrite(fn, im);
   return 0;
 }
