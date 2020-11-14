@@ -8,27 +8,29 @@ end
 
 get '/ajax' do |*e|
   puts "="*10
-  p [ e, params ]
   cx = params["x"].to_f
   cy = params["y"].to_f
   w = params["w"].to_f
   d = params["d"].to_f
   wpix = params["wpix"].to_f
-  %x(./Main #{wpix} #{d} #{cx} #{cy} #{w} )
+  cmd = "./Main #{wpix} #{d} #{cx} #{cy} #{w}"
+  puts cmd
+  puts %x(#{cmd})
   ""
 end
 
 get '/' do
-  <<~HTML
+  sidebar_w = 170
+  <<~"HTML"
   <style>
-  img{ width:calc(100vw - 160px) }
+  img{ width:calc(100vw - #{sidebar_w+20}px) }
   input.float{ width:15ex }
-  input.int{ width:10ex }
+  input.int{ width:7ex }
   .sidebar {
-    width: 140px;
+    width: #{sidebar_w}px;
   }
   .main {
-    width: calc(100vw - 150px);
+    width: calc(100vw - #{sidebar_w+10}px);
   }
   .root {
     width: calc(100vw - 20px);
@@ -48,9 +50,14 @@ get '/' do
       <button id="zout">zoom out</button>
       <br/>
       <label for="wpix">wpix:</label>
-      <input class="int" id="wpix" type="text"> <br/>
+      <button id="wpix-minus">-</button>
+      <input class="int" id="wpix" type="text">
+      <button id="wpix-plus">+</button> <br/>
       <label for="d">d:</label>
-      <input class="int" id="d" type="text"> <br/>
+      <button id="d-minus">-</button>
+      <input class="int" id="d" type="text">
+      <button id="d-plus">+</button> <br/>
+      <button id="update">update</button>
     </aside>
     <div class="main">
       <img id="img" src="img/hoge.png"/>
@@ -98,6 +105,16 @@ get '/' do
       update();
     };
 
+    const mod_item = (name, r)=>{
+      set(name, getnum(name)*r);
+      update();
+    };
+
+    document.getElementById("wpix-minus").onclick = ()=>{ mod_item("wpix", 0.5) };
+    document.getElementById("wpix-plus").onclick = ()=>{ mod_item("wpix", 2) };
+    document.getElementById("d-minus").onclick = ()=>{ mod_item("d", 0.5) };
+    document.getElementById("d-plus").onclick = ()=>{ mod_item("d", 2) };
+
     const img = document.getElementById("img");
     img.onclick = (e)=>{
       const relX = e.offsetX / img.width;
@@ -121,6 +138,7 @@ get '/' do
       set( "w", 3.5 );
       set( "wpix", 800 );
       set( "d", 200 );
+      update();
     };
     init();
   </script>
